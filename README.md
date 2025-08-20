@@ -2,6 +2,8 @@
 
 ## Publication 
 
+DOI: [https://doi.org/10.1128/aem.00689-25](https://doi.org/10.1128/aem.00689-25)
+
 ## Repository Structure and Analysis Pipeline 
 
 ### Directory contents
