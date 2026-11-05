@@ -1,46 +1,22 @@
-#!/bin/bash
-# Raw Read Accession and Quality Control
-
-# --- write job start time
-echo "Job started at $(date)"
-
-# --- activate conda env
-source ~/.bashrc
-eval "$(conda shell.bash hook)"
-conda activate bioinfo
-
-# --- download raw reads from sra
-
-WD=/your/path/here
-
-
-cd ${WD}/0.0-raw 
-
-# make sure the accession list is in the 0.0-raw directory
-
-for i in `cat acclist.txt`; do printf ${i}"\t"; fasterq-dump ${i} --split-files; done
-
-# compress files 
-gzip SRR*
-
-
-# ---- run FastQC and MultiQC on raw reads ----
-
-mkdir -p ${WD}/0.1-rawqc
-
-# --- run fastqc
-fastqc *.gz -o "${WD}/0.1-rawqc" -t 10
-
-# --- multiqc
-
-export LC_ALL=en_US.utf-8
-export LANG=en_US.utf-8
-
-multiqc ${WD}/0.1-rawqc*_fastqc.zip --interactive
-
-# --- run seqkit
-seqkit stats *.gz -T > ${WD}/0.1-rawqc/rawstats.txt
-
-# --- write job end time
-echo "Job ended at $(date)"
-
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+sd_need fasterq-dump; sd_need fastqc; sd_need multiqc; sd_need seqkit; sd_need gzip
+RAW="$SDUBLIN_WORKDIR/0.0-raw"
+QC="$SDUBLIN_WORKDIR/0.1-rawqc"
+mkdir -p "$RAW" "$QC"
+ACCESSIONS="${SDUBLIN_ACCESSION_LIST:-$RAW/acclist.txt}"
+sd_required_file "$ACCESSIONS"
+while IFS= read -r accession || [[ -n "$accession" ]]; do
+  accession="${accession//$'\r'/}"
+  [[ -z "$accession" || "$accession" == \#* ]] && continue
+  if [[ ! -s "$RAW/${accession}_1.fastq.gz" || ! -s "$RAW/${accession}_2.fastq.gz" ]]; then
+    fasterq-dump "$accession" --split-files -O "$RAW"
+    gzip -f "$RAW/${accession}_1.fastq" "$RAW/${accession}_2.fastq"
+  fi
+done < "$ACCESSIONS"
+sd_glob "$RAW/*_1.fastq.gz"
+fastqc "$RAW"/*.fastq.gz -o "$QC" -t "$SDUBLIN_THREADS"
+multiqc "$QC" -o "$QC"
+seqkit stats "$RAW"/*.fastq.gz -T > "$QC/rawstats.txt"
+echo "[PASS] SRA retrieval and raw read QC: $QC"

@@ -1,66 +1,32 @@
-#!/bin/bash
-# Raw Read Accession and Quality Control
-
-# --- write job start time
-echo "Job started at $(date)"
-
-# --- activate conda env
-source ~/.bashrc
-eval "$(conda shell.bash hook)"
-conda activate bioinfo
-
-# --- trim raw reads ---
-
-WD=/your/path/here
-ADAPTERS=/your/path/to/trimmomatic-0.39-hdfd78af_2/share/trimmomatic-0.39-2/adapters/
-
-mkdir -p ${WD}/1.0-trimmed/
-mkdir -p ${WD}/1.1-trimqc
-
-cd ${WD}/0.0-raw
-
-for f in *_1.fastq.gz
-do
-outfile=${f%_1.fastq.gz}.fastq.gz
-echo "${f}"
-
-/your/path/to/trimmomatic PE "${f}" "${f%_1.fastq.gz}_2.fastq.gz" \
--baseout "${WD}/1.0-trimmed/${outfile}" -threads 10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 ILLUMINACLIP:${ADAPTERS}TruSeq3-PE-2.fa:2:30:10
-
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+sd_need trimmomatic; sd_need fastqc; sd_need multiqc; sd_need seqkit
+RAW="$SDUBLIN_WORKDIR/0.0-raw"
+FIRST="$SDUBLIN_WORKDIR/1.0-trimmed/truseq_first_pass"
+TR="$SDUBLIN_WORKDIR/1.0-trimmed"
+QC="$SDUBLIN_WORKDIR/1.1-trimqc"
+ADAPTER_DIR="${SDUBLIN_ADAPTER_DIR:-}"
+[[ -n "$ADAPTER_DIR" ]] || sd_die "Set SDUBLIN_ADAPTER_DIR to the Trimmomatic adapters directory"
+sd_required_file "$ADAPTER_DIR/TruSeq3-PE-2.fa"
+sd_required_file "$ADAPTER_DIR/NexteraPE-PE.fa"
+mkdir -p "$FIRST" "$TR" "$QC"
+sd_glob "$RAW/*_1.fastq.gz"
+for r1 in "$RAW"/*_1.fastq.gz; do
+  id="${r1##*/}"; id="${id%_1.fastq.gz}"
+  r2="$RAW/${id}_2.fastq.gz"; sd_required_file "$r2"
+  trimmomatic PE -threads "$SDUBLIN_THREADS" "$r1" "$r2" \
+    "$FIRST/${id}_1P.fq.gz" "$FIRST/${id}_1U.fq.gz" \
+    "$FIRST/${id}_2P.fq.gz" "$FIRST/${id}_2U.fq.gz" \
+    LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 \
+    "ILLUMINACLIP:$ADAPTER_DIR/TruSeq3-PE-2.fa:2:30:10"
+  trimmomatic PE -threads "$SDUBLIN_THREADS" \
+    "$FIRST/${id}_1P.fq.gz" "$FIRST/${id}_2P.fq.gz" \
+    "$TR/${id}_1P.fq.gz" "$TR/${id}_1U.fq.gz" \
+    "$TR/${id}_2P.fq.gz" "$TR/${id}_2U.fq.gz" \
+    "ILLUMINACLIP:$ADAPTER_DIR/NexteraPE-PE.fa:2:30:10:2:True"
 done
-
-ILLUMINACLIP:${ADAPTERS}NexteraPE-PE.fa:2:30:10:2:True
-
-# repeat with nextera adapters
-
-cd ${WD}/0.1-trimmed
-
-for f in *_1P.fastq.gz
-do
-outfile=${f%_1P.fastq.gz}.fq.gz
-echo "${f}"
-
-/your/path/to/trimmomatic PE "${f}" "${f%_1P.fastq.gz}_2P.fastq.gz" \
--baseout "${WD}/1.0-trimmed/${outfile}" -threads 10 ILLUMINACLIP:${ADAPTERS}NexteraPE-PE.fa:2:30:10:2:True
-
-done
-
-# ---- trimmed read QC ----
-
-# run fastqc
-fastqc *P.fq.gz -o "${WD}/1.1-trimqc" -t 10
-
-# multiqc
-
-export LC_ALL=en_US.utf-8
-export LANG=en_US.utf-8
-
-multiqc ${WD}/1.1-trimqc/*_fastqc.zip \
-    -o  ${WD}/1.1-trimqc \
-    --interactive
-
-# run seqkit
-seqkit stats *.gz -T > ${WD}/1.1-trimqc/trimstats.txt
-
-# --- write job end time
-echo "Job ended at $(date)"
+fastqc "$TR"/*P.fq.gz -o "$QC" -t "$SDUBLIN_THREADS"
+multiqc "$QC" -o "$QC"
+seqkit stats "$TR"/*.fq.gz -T > "$QC/trimstats.txt"
+echo "[PASS] Two-pass Trimmomatic and trimmed-read QC: $TR"
