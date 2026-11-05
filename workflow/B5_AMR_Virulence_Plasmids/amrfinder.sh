@@ -1,36 +1,18 @@
-#!/bin/bash
-# AMRFinderPlus
-
-# --- write job start time
-echo "Job started at $(date)"
-
-#activate conda env
-source ~/.bashrc
-eval "$(conda shell.bash hook)"
-conda activate amrfinder
-
-#set paths
-PROT=/your/path/here/4.0-prokka/faa
-ANNO=/your/path/here/4.0-prokka/gff
-ASSEMB=/your/path/here/3.0-unicycler_entero/assemblies
-OUT=/your/path/here/4.3-amrfinder
-
-# Run
-
-cd ${ASSEMB} #change to directory with assemblies
-
-for f in *_assembly.fasta;
-do
-
-echo "running" ${f%_assembly.fasta}
-
-amrfinder -p ${PROT}/${f%_assembly.fasta}.faa \
--n ${f} \
--g ${ANNO}/${f%_assembly.fasta}.gff \
--a prokka \
--O Salmonella --plus \
--o ${OUT}/${f%_assembly.fasta} ;
-
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+sd_need amrfinder
+PROT="$SDUBLIN_WORKDIR/4.0-prokka/faa"
+ANNO="$SDUBLIN_WORKDIR/4.0-prokka/gff"
+ASSEMB="$SDUBLIN_WORKDIR/3.0-unicycler_entero/assemblies"
+OUT="$SDUBLIN_WORKDIR/4.3-amrfinder"
+mkdir -p "$OUT"
+sd_glob "$ASSEMB/*_assembly.fasta"
+for f in "$ASSEMB"/*_assembly.fasta; do
+  id="${f##*/}"; id="${id%_assembly.fasta}"
+  sd_required_file "$PROT/$id.faa"
+  sd_required_file "$ANNO/$id.gff"
+  amrfinder -p "$PROT/$id.faa" -n "$f" -g "$ANNO/$id.gff" \
+    -a prokka -O Salmonella --plus -o "$OUT/$id"
 done
-
-echo "Job ended at $(date)"
+echo "[PASS] AMRFinderPlus outputs: $OUT"

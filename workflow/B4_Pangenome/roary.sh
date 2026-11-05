@@ -1,21 +1,10 @@
-#!/bin/bash
-# Pangenome analysis: Roary
-
-# --- write job start time
-echo "Job started at $(date)"
-
-#activate conda env
-module load anaconda3
-source activate base
-conda activate roary_env
-
-#set directory paths
-GFF=/your/path/here/4.0-prokka/gff
-OUT=/your/path/here/4.1-roary
-
-cd ${GFF}
-
-roary -e --mafft -p 10 *.gff -f ${OUT} -v
-
-# --- write job end time
-echo "Job ended at $(date)"
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+sd_need roary
+GFF="$SDUBLIN_WORKDIR/4.0-prokka/gff"
+OUT="$SDUBLIN_WORKDIR/4.1-roary"
+mkdir -p "$OUT"
+sd_glob "$GFF/*.gff"
+roary -e --mafft -p "$SDUBLIN_THREADS" "$GFF"/*.gff -f "$OUT" -v
+echo "[PASS] Roary pangenome and core-gene alignment: $OUT"
