@@ -35,13 +35,17 @@ cd compare_sdublin_pipeline
 git switch publication-restructure
 cp config/paths.example.env config/paths.env
 bash scripts/check_inputs.sh
+python3 scripts/validate_structure.py
+# Optional full-data integrity verification (reads all deposited files):
+python3 scripts/verify_data_provenance.py
 ```
 
 The deposited matrices and metadata support the downstream R analyses. Install the R packages identified at the top of each R script, then run an analysis (from the repository root):
 
 ```bash
-Rscript workflow/B6_Comparative_Analyses/plotmeta.R
-Rscript workflow/B6_Comparative_Analyses/amrfinder.R
+Rscript scripts/check_r_packages.R
+bash scripts/run_r_analysis.sh plotmeta
+bash scripts/run_r_analysis.sh amrfinder
 ```
 
 The full pangenome `gene_presence_absence.csv` and `.Rtab` required by `pangenome.R`, and the `combinedkreports.xlsx` file used by the study, are available separately through the linked Zenodo record. Place them under the directories specified in [docs/DATA_REQUIREMENTS.md](docs/DATA_REQUIREMENTS.md).
