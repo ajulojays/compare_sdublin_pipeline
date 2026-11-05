@@ -11,6 +11,7 @@ cp config/paths.example.env config/paths.env
 # Edit paths.env for database, adapter and software resources.
 source config/paths.env
 bash scripts/check_inputs.sh
+python3 scripts/validate_structure.py
 ```
 
 Conda specifications under `environments/` are derived from historical environment exports. They contain tightly pinned package/build combinations, and some may not solve on every present-day platform. Preserve the historic files for provenance; document a resolved environment before manuscript-scale reruns.
@@ -36,10 +37,11 @@ The exact script names and detailed file purposes are linked from [SCRIPT_INDEX.
 
 ```bash
 export SDUBLIN_ROOT="$PWD"
-Rscript workflow/B6_Comparative_Analyses/plotmeta.R
-Rscript workflow/B6_Comparative_Analyses/abricate.R
-Rscript workflow/B6_Comparative_Analyses/amrfinder.R
-Rscript workflow/B6_Comparative_Analyses/snp.R
+Rscript scripts/check_r_packages.R
+bash scripts/run_r_analysis.sh plotmeta
+bash scripts/run_r_analysis.sh abricate
+bash scripts/run_r_analysis.sh amrfinder
+bash scripts/run_r_analysis.sh snp
 ```
 
 For `pangenome.R`, first place the missing combined Roary files from Zenodo at the locations documented in [DATA_REQUIREMENTS.md](DATA_REQUIREMENTS.md). The original R scripts retain their statistical and plotting logic. External finishing of the original figures in iTOL and Flourish remains a separate provenance step and is not implied by R execution.
