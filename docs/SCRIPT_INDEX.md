@@ -68,3 +68,8 @@ All original environment YAML filenames are in [`environments/`](../environments
 | --- | --- |
 | [`scripts/check_inputs.sh`](../scripts/check_inputs.sh) | Verify deposited inputs and report missing external files |
 | [`scripts/make_publication_archive.sh`](../scripts/make_publication_archive.sh) | Generate a versioned archive with SHA-256 checksum from a frozen Git tag |
+| [`scripts/run_r_analysis.sh`](../scripts/run_r_analysis.sh) | Execute one named downstream R analysis from the project root |
+| [`scripts/check_r_packages.R`](../scripts/check_r_packages.R) | Report missing R packages without modifying the environment |
+| [`scripts/validate_structure.py`](../scripts/validate_structure.py) | Check all 24 analysis scripts, shell syntax, data locations and environment portability |
+| [`scripts/verify_data_provenance.py`](../scripts/verify_data_provenance.py) | Compare all archived source-data files with original Git blob identities |
+| [`workflow/lib/common.sh`](../workflow/lib/common.sh) | Central project-root configuration and input-file checks for Bash stages |
