@@ -284,4 +284,3 @@ dependencies:
       - typing-extensions==4.5.0
       - urllib3==1.26.10
       - zipp==3.14.0
-prefix: /storage/home/smk459/work/conda_envs/bioinfo

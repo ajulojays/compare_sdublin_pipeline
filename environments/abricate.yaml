@@ -153,4 +153,3 @@ dependencies:
   - wget=1.20.3=ha35d2d1_1
   - zlib=1.2.13=h166bdaf_4
   - zstd=1.5.2=h3eb15da_6
-prefix: /storage/home/smk459/work/conda_envs/abricate

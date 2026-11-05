@@ -69,4 +69,3 @@ dependencies:
   - wget=1.21.4=hda4d442_0
   - zlib=1.3.1=h4ab18f5_1
   - zstd=1.5.6=ha6fb4c9_0
-prefix: /storage/home/smk459/work/conda_envs/amrfinder
