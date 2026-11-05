@@ -1,76 +1,72 @@
-# Genomic evolution of *Salmonella* Dublin in cattle and humans in the United States
+# Genomic evolution of *Salmonella* Dublin in U.S. cattle and humans
 
-## Publication 
+Reproducible analysis code and deposited study inputs for the published comparative-genomics investigation.
 
-DOI: [https://doi.org/10.1128/aem.00689-25](https://doi.org/10.1128/aem.00689-25)
+**Publication:** [Kenney et al., *Applied and Environmental Microbiology*](https://doi.org/10.1128/aem.00689-25)  
+**Original study repository:** [sophiakenney/compare_sdublin](https://github.com/sophiakenney/compare_sdublin)  
+**Supplementary data:** [Zenodo record 15652582](https://zenodo.org/records/15652582)  
+**Workflow script-by-script guide:** [docs/SCRIPT_INDEX.md](docs/SCRIPT_INDEX.md)
 
-## Repository Structure and Analysis Pipeline 
+## Layout
 
-### Directory contents
+```text
+workflow/
+  B1_Reads_QC/                  SRA download, trimming, Kraken2, read extraction
+  B2_Assembly_Typing/           Unicycler, CheckM/QUAST, SeqSero2, SISTR, MLST
+  B3_Phylogenomics/             ModelTest-NG, IQ-TREE
+  B4_Pangenome/                 Prokka, Roary and annotation summaries
+  B5_AMR_Virulence_Plasmids/    AMRFinderPlus and ABRicate
+  B6_Comparative_Analyses/      Eight R scripts for figures and tables
+data/                            Preserved study tables, metadata, tree and matrices
+environments/                    Original Conda environment specifications
+config/                          Local path configuration template
+scripts/                         Execution, dataset checks and archive tools
+docs/                            Script index, provenance and release procedure
+```
 
-*   `bash` contains all code used to perform the analysis and generate output tables used in RStudio
-  
-      * subdir `condaenv_yaml` contains yaml files for all conda environments needed for the analysis
+Original scientific script **filenames are retained**. Data are reorganized without changing their recorded values. All analyses are run from the repository root unless stated otherwise.
 
-*    `R` contains all code used to perform downstream analysis and data visualizations used in the manuscript
+## Reproduce the analyses
 
-      * `abricate` : abricate results 
-      * `amrfinder` : amrfinder results 
-      * `assembqc` : assembly qc tables 
-      * `functionalanno` : annotation files, relevant gene lists, and reference files for gene annotation
-      * `meta` : metadata for final dataset
-      * `pangenome` :  raw data files and subset matrices from permutational analysis
-      * `phylo` : SNP distance matrix, and tree file
-      * `readqc` : read qc tables
-      * `script` : all R scripts
+```bash
+git clone https://github.com/ajulojays/compare_sdublin_pipeline.git
+cd compare_sdublin_pipeline
+# On the restructuring branch until a publication release is approved:
+git switch publication-restructure
+cp config/paths.example.env config/paths.env
+bash scripts/check_inputs.sh
+python3 scripts/validate_structure.py
+# Optional full-data integrity verification (reads all deposited files):
+python3 scripts/verify_data_provenance.py
+```
 
-### Analysis Pipeline 
+The deposited matrices and metadata support the downstream R analyses. Install the R packages identified at the top of each R script, then run an analysis (from the repository root):
 
-#### **HPC Component**
+```bash
+Rscript scripts/check_r_packages.R
+bash scripts/run_r_analysis.sh plotmeta
+bash scripts/run_r_analysis.sh amrfinder
+```
 
-Bash scripts should be run in roughly this order: 
+The full pangenome `gene_presence_absence.csv` and `.Rtab` required by `pangenome.R`, and the `combinedkreports.xlsx` file used by the study, are available separately through the linked Zenodo record. Place them under the directories specified in [docs/DATA_REQUIREMENTS.md](docs/DATA_REQUIREMENTS.md).
 
-1. accessionqc.sh - download reads and generate qc reports
-2. trimqc.sh - qc reads and generate qc reports
-3. classifyreads.sh - taxonomic classification to check for contamination
-4. filterreads.sh - filter for *Enterobacteriaceae* reads
-5. assembly.sh - genome assembly
-6. assembqc.sh - assembly qc
+For read-level reconstruction, supply an accession list, configure the Kraken2 database and program dependencies, and execute the commands in [docs/EXECUTION.md](docs/EXECUTION.md). A full-read reconstruction requires substantial HPC resources; the deposited downstream inputs can be inspected independently.
 
-Once assemblies have been constructed all of the following can be run somewhat concurrently:
+## Script guide
 
-* sistr.sh - *in silico* serotyping
-* seqsero2.sh - *in silico* serotyping
-* mlst.sh - cgMLST assignment
-* prokka.sh - genome annotation
-* abricate.sh - genome annotation (virulence factors and plasmids only)
+| Stage | Files | Purpose |
+| --- | --- | --- |
+| B1 | [`workflow/B1_Reads_QC/`](workflow/B1_Reads_QC) | Obtain and quality-filter reads; Kraken2 classification and Enterobacteriaceae extraction |
+| B2 | [`workflow/B2_Assembly_Typing/`](workflow/B2_Assembly_Typing) | Assemble, evaluate, serotype and sequence-type genomes |
+| B3 | [`workflow/B3_Phylogenomics/`](workflow/B3_Phylogenomics) | Fit nucleotide substitution model and infer core-gene tree |
+| B4 | [`workflow/B4_Pangenome/`](workflow/B4_Pangenome) | Annotate assemblies and generate Roary pangenome/core alignment |
+| B5 | [`workflow/B5_AMR_Virulence_Plasmids/`](workflow/B5_AMR_Virulence_Plasmids) | Detect AMR elements and plasmid replicons |
+| B6 | [`workflow/B6_Comparative_Analyses/`](workflow/B6_Comparative_Analyses) | Publication figures, genomic comparisons and tables |
 
-The following can be run after Prokka completes
-* combineprokkasummary.sh - summarize Prokka results
-* amrfinder.sh - AMR annotation
-* roary.sh - pangenome annotation and core genome alignment
+**Every individual script and its expected handoff** is identified in [docs/SCRIPT_INDEX.md](docs/SCRIPT_INDEX.md). The repository intentionally distinguishes upstream processed tables from outputs that require external reads or additional deposited files.
 
-The following can be run after Roary completes
-1. modeltest.sh - determine best nucleotide substitution model for phylogenetic tree building
-2. iqtree.sh - build phylogenetic tree
+## Citation, attribution and archive
 
-#### **RStudio Component**
+Cite the [original study](https://doi.org/10.1128/aem.00689-25) and the upstream source repository when reusing the analytical methods. This reorganized copy retains upstream attribution and must not be represented as a new independent study. [Provenance](docs/PROVENANCE.md) records what changed.
 
-Recommended order:
-
-1. meta.R - plot Figure 1
-2. readqc.R - aggregate read qc details in supplementary tables
-     * `combinedkreports.xlsx` can be downloaded [here](https://zenodo.org/records/15652582)
-4. assembqc.R - aggregate assembly qc details in supplementary tables
-5. abricate.R - create Tables 1 and 4 (including associated statistical tests)
-6. amrfinder.R - create Tables 2 and 3; plot Figure 2 (including associated statistical tests)
-7. pangenome.R - create Table 5; plot Figure 3A-C (including associated statistical tests)
-     * full dataset `gene_presence_absence` tables can be downloaded [here](https://zenodo.org/records/15652582)
-9. anno.R - plot Figure 3D
-10. snp.R - plot Figure 4B-D (Figure 4A generated with [iTOL](https://itol.embl.de/))
-     * As the way the chord diagrams are plotted imply transmission directionality that cannot be reliably inferred, plots were edited in [Flourish](https://flourish.studio/) to resolve this and generate the figures seen in the manuscript.    
-
-
-
-
-
+[Release and preservation instructions](docs/ARCHIVE_RELEASE.md) explain how to freeze a commit, create a checksum-verified source archive, and deposit the approved publication version. **This branch is a preparation version, not yet a validated immutable publication release.**
