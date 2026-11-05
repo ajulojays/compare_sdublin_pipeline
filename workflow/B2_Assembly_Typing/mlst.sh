@@ -1,19 +1,10 @@
-#!/bin/bash
-# MLST
-
-# --- write job start time
-echo "Job started at $(date)"
-
-#activate conda env
-source ~/.bashrc
-eval "$(conda shell.bash hook)"
-conda activate mlst
-
-OUT=/your/path/here/3.2-sero/mlst
-
-cd /your/path/here/3.0-unicycler_entero/assemblies
-
-mlst --scheme senterica_achtman_2 *.fasta > ${OUT}/mlst.tsv
-
-# --- write job end time
-echo "Job ended at $(date)"
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+sd_need mlst
+ASSEMB="$SDUBLIN_WORKDIR/3.0-unicycler_entero/assemblies"
+OUT="$SDUBLIN_WORKDIR/3.2-sero/mlst"
+mkdir -p "$OUT"
+sd_glob "$ASSEMB/*_assembly.fasta"
+mlst --scheme senterica_achtman_2 "$ASSEMB"/*_assembly.fasta > "$OUT/mlst.tsv"
+echo "[PASS] Achtman MLST calls: $OUT/mlst.tsv"

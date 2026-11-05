@@ -1,42 +1,19 @@
-#!/bin/bash
-# Run SeqSero2
-
-# --- write job start time
-echo "Job started at $(date)"
-
-# --- activate conda env
-source ~/.bashrc
-eval "$(conda shell.bash hook)"
-conda activate seqsero
-
-# --- set directory paths
-ASSEMB=/your/path/here/3.0-unicycler_entero/assemblies
-OUT=/your/path/here/3.2-sero/seqsero
-
-# --- change to working directory
-cd ${ASSEMB}
-
-# -m "k" for raw reads and genome assembly k-mer
-# -t "4" for genome assembly as input data type
-# -i path to input file
-# -d output directory
-
-for f in *.fasta ;
-do
-
-  echo ${f%_assembly.fasta}
-
-  SeqSero2_package.py -m k -t 4 \
-  -i ${ASSEMB}/${f} \
-  -d ${OUT}/${f%_assembly.fasta}_seqsero \
-  -n ${f%_assembly.fasta} ;
-
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+sd_need SeqSero2_package.py
+ASSEMB="$SDUBLIN_WORKDIR/3.0-unicycler_entero/assemblies"
+OUT="$SDUBLIN_WORKDIR/3.2-sero/seqsero"
+mkdir -p "$OUT"
+sd_glob "$ASSEMB/*_assembly.fasta"
+for assembly in "$ASSEMB"/*_assembly.fasta; do
+  id="${assembly##*/}"; id="${id%_assembly.fasta}"
+  SeqSero2_package.py -m k -t 4 -i "$assembly" -d "$OUT/${id}_seqsero" -n "$id"
 done
-
-# create one file
-cd ${OUT}
-
-{ head -n 1 SRR###_seqsero/SeqSero_result.tsv; tail -n +2 -q *_seqsero/*_result.tsv; } > enteroseqsero_summary.tsv # you will need to edit the SRR### to be an actual ID
-
-# --- write job end time
-echo "Job ended at $(date)"
+sd_glob "$OUT/*_seqsero/SeqSero_result.tsv"
+reports=("$OUT"/*_seqsero/SeqSero_result.tsv)
+{
+  head -n 1 "${reports[0]}"
+  for f in "${reports[@]}"; do tail -n +2 "$f"; done
+} > "$OUT/enteroseqsero_summary.tsv"
+echo "[PASS] SeqSero2 assembly-based serotyping: $OUT"

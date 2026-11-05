@@ -1,43 +1,16 @@
-#!/bin/bash
-# Genome Assembly
-
-# --- write job start time
-echo "Job started at $(date)"
-
-# --- activate conda env
-source ~/.bashrc
-eval "$(conda shell.bash hook)"
-conda activate unicycler
-
-# --- set paths up for unicycler
-FILT="/your/path/here/2.1-k2filteredentero"
-UNI=/your/path/here/Unicycler
-OUT=/your/path/here/3.0-unicycler_entero
-
-cd ${FILT} #change to directory with filtered reads
-
-for f in *.filt_1P.fq;
-do
-
-echo "assemble" ${f%.filt_1P.fq}
-
-${UNI}/unicycler-runner.py -1 ${FILT}/${f} \
--2 ${FILT}/${f%.filt_1P.fq}.filt_2P.fq \
--o ${OUT}/${f%.filt_1P.fq} ;
-
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+sd_need unicycler
+FILT="$SDUBLIN_WORKDIR/2.1-k2filteredentero"
+OUT="$SDUBLIN_WORKDIR/3.0-unicycler_entero"
+mkdir -p "$OUT/assemblies"
+sd_glob "$FILT/*.filt_1P.fq"
+for r1 in "$FILT"/*.filt_1P.fq; do
+  id="${r1##*/}"; id="${id%.filt_1P.fq}"
+  r2="$FILT/${id}.filt_2P.fq"; sd_required_file "$r2"
+  unicycler -1 "$r1" -2 "$r2" -o "$OUT/$id"
+  sd_required_file "$OUT/$id/assembly.fasta"
+  cp "$OUT/$id/assembly.fasta" "$OUT/assemblies/${id}_assembly.fasta"
 done
-
-mkdir ${OUT}/assemblies #make directory for all assemblies
-
-for f in *.filt_1P.fq;
-do
-
-cd ${OUT}/${f%.filt_1P.fq}
-cat assembly.fasta > ${f%.filt_1P.fq}_assembly.fasta
-mv ${f%.filt_1P.fq}_assembly.fasta ../assemblies
-cd ..;
-
-done
-
-# --- write job start end
-echo "Job started at $(date)"
+echo "[PASS] Unicycler draft assemblies: $OUT/assemblies"

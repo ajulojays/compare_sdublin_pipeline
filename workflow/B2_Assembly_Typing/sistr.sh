@@ -1,68 +1,29 @@
-#!/bin/bash
-# Run SISTR
-
-# --- write job start time
-echo "Job started at $(date)"
-
-# --- activate conda env
-source ~/.bashrc
-eval "$(conda shell.bash hook)"
-conda activate sistr
-
-#set directory paths
-ASSEMB=/your/path/here/3.0-unicycler_entero/assemblies
-OUT=/your/path/here/3.2-sero/sistr
-
-#change to working directory
-cd ${ASSEMB}
-
-for f in *_assembly.fasta ;
-do
-
-  echo ${f%_assembly.fasta}
-
-  sistr --qc \
-  -vv \
-  -t 4 \
-  --alleles-output ${f%_assembly.fasta}_allele-results.json \
-  --novel-alleles ${f%_assembly.fasta}_novel-alleles.fasta \
-  --cgmlst-profiles ${f%_assembly.fasta}_cgmlst-profiles.csv \
-  -f tab \
-  -o ${f%_assembly.fasta}-output.tab ${f} ;
-
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+sd_need sistr
+ASSEMB="$SDUBLIN_WORKDIR/3.0-unicycler_entero/assemblies"
+OUT="$SDUBLIN_WORKDIR/3.2-sero/sistr"
+mkdir -p "$OUT/alleles" "$OUT/novel" "$OUT/cgmlst" "$OUT/output"
+sd_glob "$ASSEMB/*_assembly.fasta"
+for assembly in "$ASSEMB"/*_assembly.fasta; do
+  id="${assembly##*/}"; id="${id%_assembly.fasta}"
+  sistr --qc -vv -t 4 \
+    --alleles-output "$OUT/alleles/${id}_allele-results.json" \
+    --novel-alleles "$OUT/novel/${id}_novel-alleles.fasta" \
+    --cgmlst-profiles "$OUT/cgmlst/${id}_cgmlst-profiles.csv" \
+    -f tab -o "$OUT/output/${id}-output.tab" "$assembly"
 done
-
-# move results to output directory:
-
-# create subdirectories if they don't already exist
-
-mkdir -p ${OUT}/alleles
-mkdir -p ${OUT}/novel
-mkdir -p ${OUT}/cgmlst
-mkdir -p ${OUT}/output
-
-# move files
-
-for f in *_assembly.fasta
-
-do
-        mv ${f%_assembly.fasta}_allele-results.json ${OUT}/alleles
-        mv ${f%_assembly.fasta}_novel-alleles.fasta ${OUT}/novel
-        mv ${f%_assembly.fasta}_cgmlst-profiles.csv ${OUT}/cgmlst
-        mv ${f%_assembly.fasta}-output.tab ${OUT}/output
-
-done
-
-
-#create one file
-
-cd ${OUT}/output
-
-{ head -n 1 SRR###-output.tab; tail -n +2 -q *.tab; } > sistr_output.txt # you will need to edit the SRR### to be an actual ID
-
-cd ../cgmlst
-
-{ head -n 1 SRR###_cgmlst-profiles.csv; tail -n +2 -q *profiles.csv; } > sistr_cgmlst.csv # you will need to edit the SRR### to be an actual ID
-
-# --- write job end time
-echo "Job ended at $(date)"
+sd_glob "$OUT/output/*-output.tab"
+reports=("$OUT/output"/*-output.tab)
+{
+  head -n 1 "${reports[0]}"
+  for f in "${reports[@]}"; do tail -n +2 "$f"; done
+} > "$OUT/output/sistr_output.txt"
+sd_glob "$OUT/cgmlst/*_cgmlst-profiles.csv"
+profiles=("$OUT/cgmlst"/*_cgmlst-profiles.csv)
+{
+  head -n 1 "${profiles[0]}"
+  for f in "${profiles[@]}"; do tail -n +2 "$f"; done
+} > "$OUT/cgmlst/sistr_cgmlst.csv"
+echo "[PASS] SISTR serotyping/cgMLST: $OUT"
