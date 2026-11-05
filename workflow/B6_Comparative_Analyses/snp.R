@@ -8,7 +8,7 @@ library("ggpubr")
 library("ape")
 library("chorddiag")
 
-setwd("./R")
+setwd(file.path(Sys.getenv("SDUBLIN_ROOT", unset=getwd()), "data"))
 
 sourcepal <- c("Clinical Bovine" = "#382A54FF",
                "Environmental" = "#3497A9FF",

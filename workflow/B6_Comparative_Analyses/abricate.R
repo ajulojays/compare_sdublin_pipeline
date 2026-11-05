@@ -5,7 +5,7 @@ library("tidyverse")
 library("tidylog")
 library("gt")
 
-setwd("./R")
+setwd(file.path(Sys.getenv("SDUBLIN_ROOT", unset=getwd()), "data"))
 
 # ---- Load Tables ----
 vf <- read.delim("abricate/vf-all_summary.txt", sep = "\t")

@@ -7,7 +7,7 @@ library("vegan")
 library("pairwiseAdonis")
 library("pagoo")
 
-setwd("./R")
+setwd(file.path(Sys.getenv("SDUBLIN_ROOT", unset=getwd()), "data"))
 
 # ---- Load Tables ---- 
 met <- read.delim("meta/finalset_meta.tsv", sep = "\t")

@@ -7,7 +7,7 @@ library("gt")
 library("vegan")
 library("pairwiseAdonis")
 
-setwd("./R")
+setwd(file.path(Sys.getenv("SDUBLIN_ROOT", unset=getwd()), "data"))
 
 # ---- Load Tables ----
 tab <- read.delim("amrfinder/amrfinderentero.txt", sep = "\t")

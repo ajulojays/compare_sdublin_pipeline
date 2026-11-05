@@ -5,7 +5,7 @@ library("tidyverse")
 library("tidylog")
 library("ggpubr")
 
-setwd("./R")
+setwd(file.path(Sys.getenv("SDUBLIN_ROOT", unset=getwd()), "data"))
 
 
 # ---- Load Tables ----

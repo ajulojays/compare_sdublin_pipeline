@@ -4,7 +4,7 @@
 library("tidyverse")
 library("tidylog")
 
-setwd("./R")
+setwd(file.path(Sys.getenv("SDUBLIN_ROOT", unset=getwd()), "data"))
 
 # ---- Load Tables ----
 quast <- read.delim("assembqc/report.tsv", sep = "\t")
