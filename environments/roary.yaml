@@ -1,4 +1,4 @@
-name: /storage/work/smk459/conda_envs/roary_env
+name: roary_env
 channels:
   - bioconda
   - r
@@ -328,4 +328,3 @@ dependencies:
   - xz=5.2.6=h166bdaf_0
   - zlib=1.2.13=hd590300_5
   - zstd=1.4.9=ha95c52a_0
-prefix: /storage/work/smk459/conda_envs/roary_env

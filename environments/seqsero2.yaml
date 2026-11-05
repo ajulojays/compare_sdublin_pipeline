@@ -60,4 +60,3 @@ dependencies:
   - zstd=1.5.5=hc292b87_0
   - pip:
       - seqsero2==1.2.1
-prefix: /storage/home/smk459/work/conda_envs/seqsero
