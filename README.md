@@ -31,8 +31,6 @@ Original scientific script **filenames are retained**. Data are reorganized with
 ```bash
 git clone https://github.com/ajulojays/compare_sdublin_pipeline.git
 cd compare_sdublin_pipeline
-# On the restructuring branch until a publication release is approved:
-git switch publication-restructure
 cp config/paths.example.env config/paths.env
 bash scripts/check_inputs.sh
 python3 scripts/validate_structure.py
@@ -69,4 +67,4 @@ For read-level reconstruction, supply an accession list, configure the Kraken2 d
 
 Cite the [original study](https://doi.org/10.1128/aem.00689-25) and the upstream source repository when reusing the analytical methods. This reorganized copy retains upstream attribution and must not be represented as a new independent study. [Provenance](docs/PROVENANCE.md) records what changed.
 
-[Release and preservation instructions](docs/ARCHIVE_RELEASE.md) explain how to freeze a commit, create a checksum-verified source archive, and deposit the approved publication version. **This branch is a preparation version, not yet a validated immutable publication release.**
+[Release and preservation instructions](docs/ARCHIVE_RELEASE.md) explain how to freeze a commit, create a checksum-verified source archive, and deposit the approved publication version. **Publication snapshot:** the frozen source tree is available at the `archive-v1.0.0` branch; its exact commit identifier should be cited alongside the original study. An independent long-term deposit/DOI has not yet been registered, and a full end-to-end reconstruction has not been verified.
