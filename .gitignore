@@ -1,13 +1,4 @@
-# Working data, intermediate results and environment-specific configuration
-work/
-results/
-output/
-outputs/
-dist/
-config/paths.env
+.Rproj.user
 .Rhistory
 .RData
-.Rproj.user/
-__pycache__/
-*.log
-.DS_Store
+.Ruserdata
